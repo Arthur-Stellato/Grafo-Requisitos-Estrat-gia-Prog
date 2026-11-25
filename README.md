@@ -9,8 +9,8 @@ Implementação de grafos em C · **Tema 4: Universidade — pré-requisitos de 
 | # | Nome |
 |---|------|
 | 1 | _Arthur Gabriel Teotonio Stellato_ |
-| 2 | _(preencher)_ |
-| 3 | _(preencher)_ |
+| 2 | _ABNER EDUARDO DE BRITO TORRES_ |
+| 3 | _CARLOS EDUARDO PEREIRA_ |
 
 ## Sobre
 
