@@ -5,56 +5,52 @@
 #define MAX_V    50
 #define MAX_NOME 50
 
-/* ---------------------------------------------------------------- */
-/* Estruturas                                                       */
-/* ---------------------------------------------------------------- */
+/* --- Estruturas --- */
 
-typedef struct No {
+typedef struct Vertice {
     int destino;
-    struct No *prox;
-} No;
+    struct Vertice *prox;
+} Vertice;
 
 typedef struct {
-    int  n;
-    char nome[MAX_V][MAX_NOME];
-    No  *adj[MAX_V];
-    No  *radj[MAX_V];
+    int      n;
+    char     nome[MAX_V][MAX_NOME];
+    Vertice *adj[MAX_V];
+    Vertice *radj[MAX_V];
 } Grafo;
 
 /* Resultado de uma busca (usado pela DFS e pela BFS) */
 typedef struct {
     int origem;
     int objetivo;                 /* -1 = sem objetivo (varredura completa) */
-    int ordem[MAX_V];             /* vertices na ordem em que foram visitados */
+    int ordem[MAX_V];
     int qtd_visitados;
     int arestas_percorridas;      /* arestas examinadas a partir de vertices visitados */
     int arestas_arvore;           /* arestas que descobriram um vertice novo */
-    int achou;                    /* objetivo encontrado? */
+    int achou;
     int caminho[MAX_V];           /* caminho origem -> objetivo (se achou) */
     int tam_caminho;
 } Busca;
 
-/* ---------------------------------------------------------------- */
-/* Grafo                                                            */
-/* ---------------------------------------------------------------- */
+/* --- Grafo --- */
 
-static void inserir_no_fim(No **lista, int destino)
+static void inserir_no_fim(Vertice **lista, int destino)
 {
-    No *novo = (No *)malloc(sizeof(No));
+    Vertice *novo = (Vertice *)malloc(sizeof(Vertice));
     if (!novo) { fprintf(stderr, "Sem memoria.\n"); exit(1); }
     novo->destino = destino;
     novo->prox = NULL;
 
     if (*lista == NULL) { *lista = novo; return; }
 
-    No *p = *lista;
+    Vertice *p = *lista;
     while (p->prox) p = p->prox;
     p->prox = novo;
 }
 
-static void liberar_lista(No *p)
+static void liberar_lista(Vertice *p)
 {
-    while (p) { No *t = p; p = p->prox; free(t); }
+    while (p) { Vertice *t = p; p = p->prox; free(t); }
 }
 
 static void grafo_init(Grafo *g)
@@ -81,7 +77,7 @@ static int grafo_add_vertice(Grafo *g, const char *nome)
 
 static int existe_aresta(const Grafo *g, int u, int v)
 {
-    for (No *p = g->adj[u]; p; p = p->prox)
+    for (Vertice *p = g->adj[u]; p; p = p->prox)
         if (p->destino == v) return 1;
     return 0;
 }
@@ -91,7 +87,7 @@ static int alcanca(const Grafo *g, int v, int alvo, int visitado[])
 {
     if (v == alvo) return 1;
     visitado[v] = 1;
-    for (No *p = g->adj[v]; p; p = p->prox)
+    for (Vertice *p = g->adj[v]; p; p = p->prox)
         if (!visitado[p->destino] && alcanca(g, p->destino, alvo, visitado))
             return 1;
     return 0;
@@ -144,9 +140,7 @@ static void carregar_exemplo(Grafo *g)
     for (int i = 0; i < qa; i++) grafo_add_aresta(g, arestas[i][0], arestas[i][1]);
 }
 
-/* ---------------------------------------------------------------- */
-/* Impressao auxiliar                                               */
-/* ---------------------------------------------------------------- */
+/* --- Impressao auxiliar --- */
 
 static void listar_disciplinas(const Grafo *g)
 {
@@ -156,12 +150,12 @@ static void listar_disciplinas(const Grafo *g)
 
         printf("       pre-requisitos diretos: ");
         if (!g->radj[v]) printf("(nenhum)");
-        for (No *p = g->radj[v]; p; p = p->prox)
+        for (Vertice *p = g->radj[v]; p; p = p->prox)
             printf("%s%s", g->nome[p->destino], p->prox ? ", " : "");
 
         printf("\n       libera:                 ");
         if (!g->adj[v]) printf("(nenhuma)");
-        for (No *p = g->adj[v]; p; p = p->prox)
+        for (Vertice *p = g->adj[v]; p; p = p->prox)
             printf("%s%s", g->nome[p->destino], p->prox ? ", " : "");
         printf("\n");
     }
@@ -210,11 +204,9 @@ static void relatorio(const Grafo *g, const char *algoritmo, const Busca *b)
     }
 }
 
-/* ---------------------------------------------------------------- */
-/* DFS - recursiva com backtracking                                 */
-/* ---------------------------------------------------------------- */
+/* --- DFS - recursiva com backtracking --- */
 
-static int dfs_rec(const Grafo *g, No *const *lista, Busca *b, int v,
+static int dfs_rec(const Grafo *g, Vertice *const *lista, Busca *b, int v,
                    int visitado[], int atual[], int *topo, int nivel)
 {
     visitado[v] = 1;
@@ -225,7 +217,7 @@ static int dfs_rec(const Grafo *g, No *const *lista, Busca *b, int v,
 
     if (v == b->objetivo) return 1;       /* achou: nao desfaz o caminho */
 
-    for (No *p = lista[v]; p; p = p->prox) {
+    for (Vertice *p = lista[v]; p; p = p->prox) {
         b->arestas_percorridas++;
         if (!visitado[p->destino]) {
             b->arestas_arvore++;
@@ -240,7 +232,7 @@ static int dfs_rec(const Grafo *g, No *const *lista, Busca *b, int v,
     return 0;
 }
 
-static void executar_dfs(const Grafo *g, No *const *lista, int origem, int objetivo,
+static void executar_dfs(const Grafo *g, Vertice *const *lista, int origem, int objetivo,
                          const char *titulo)
 {
     Busca b;
@@ -262,11 +254,9 @@ static void executar_dfs(const Grafo *g, No *const *lista, int origem, int objet
     relatorio(g, "DFS", &b);
 }
 
-/* ---------------------------------------------------------------- */
-/* BFS - iterativa com fila                                         */
-/* ---------------------------------------------------------------- */
+/* --- BFS - iterativa com fila --- */
 
-static void executar_bfs(const Grafo *g, No *const *lista, int origem, int objetivo)
+static void executar_bfs(const Grafo *g, Vertice *const *lista, int origem, int objetivo)
 {
     Busca b;
     memset(&b, 0, sizeof(b));
@@ -292,13 +282,13 @@ static void executar_bfs(const Grafo *g, No *const *lista, int origem, int objet
 
         if (v == objetivo) { b.achou = 1; break; }
 
-        for (No *p = lista[v]; p; p = p->prox) {
+        for (Vertice *p = lista[v]; p; p = p->prox) {
             b.arestas_percorridas++;
             if (!visitado[p->destino]) {
                 visitado[p->destino] = 1;
                 pai[p->destino] = v;
                 b.arestas_arvore++;
-                fila[fim++] = p->destino;         /* enfileira vizinho novo */
+                fila[fim++] = p->destino;
             }
         }
     }
@@ -312,16 +302,14 @@ static void executar_bfs(const Grafo *g, No *const *lista, int origem, int objet
     relatorio(g, "BFS", &b);
 }
 
-/* ---------------------------------------------------------------- */
-/* Desafio: o que preciso concluir ANTES de cursar a disciplina X?  */
-/* ---------------------------------------------------------------- */
+/* --- Desafio: o que preciso concluir ANTES de cursar a disciplina X? --- */
 
 /* DFS no grafo reverso; o pos-ordem coloca cada pre-requisito antes
  * de quem depende dele, ou seja, ja sai numa ordem valida de cursar. */
 static void pos_ordem(const Grafo *g, int v, int visitado[], int saida[], int *qtd)
 {
     visitado[v] = 1;
-    for (No *p = g->radj[v]; p; p = p->prox)
+    for (Vertice *p = g->radj[v]; p; p = p->prox)
         if (!visitado[p->destino]) pos_ordem(g, p->destino, visitado, saida, qtd);
     saida[(*qtd)++] = v;
 }
@@ -348,9 +336,7 @@ static void consultar_prerequisitos(const Grafo *g, int alvo)
     imprimir_sequencia(g, ordem, qtd);
 }
 
-/* ---------------------------------------------------------------- */
-/* Entrada de dados                                                 */
-/* ---------------------------------------------------------------- */
+/* --- Entrada de dados --- */
 
 static int ler_int(const char *prompt)
 {
@@ -358,7 +344,7 @@ static int ler_int(const char *prompt)
     int x;
     for (;;) {
         printf("%s", prompt);
-        if (!fgets(buf, sizeof(buf), stdin)) exit(0);       /* EOF */
+        if (!fgets(buf, sizeof(buf), stdin)) exit(0);
         if (sscanf(buf, "%d", &x) == 1) return x;
         printf("Entrada invalida, tente de novo.\n");
     }
@@ -390,9 +376,7 @@ static int ler_objetivo(const Grafo *g)
     }
 }
 
-/* ---------------------------------------------------------------- */
-/* Menu                                                             */
-/* ---------------------------------------------------------------- */
+/* --- Menu --- */
 
 static void menu(void)
 {
